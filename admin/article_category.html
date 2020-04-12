@@ -52,4 +52,177 @@
         </div>
     </div>
 
+    <!-- 弹出模态框 -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">New message</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <!-- 隐藏 用来保存 编辑的序号 -->
+                        <input type="hidden" name="" id="categoryId">
+                        <div class="form-group">
+                            <label for="recipient-name" class="control-label">Recipient:</label>
+                            <input type="text" class="form-control" id="recipient-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="message-text" class="control-label">Message:</label>
+                            <textarea class="form-control" id="message-text"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" id="btnAddOrEdit" class="btn btn-primary">Send message</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入http.js文件 -->
+    <script src="./libs/http.js"></script>
+    <!-- 模块引擎 -->
+    <script id="art_cat" type="text/html">
+            {{each data v}}
+            <tr>
+               <td>{{ v.name }}</td>
+               <td>{{ v.slug }}</td>
+               <td class="text-center">
+                   <a href="javascript:void(0);" data-toggle="modal" data-target="#myModal" class=" btn btn-info btn-xs" data-id="{{ v.id }}">编辑</a>
+                   <a href="javascript:void(0)" class="btn btn-danger btn-xs delete" data-id="{{ v.id }}"">删除</a>
+               </td>
+           </tr>
+            {{/each}}
+           </script>
+    <script>
+        //入口函数
+        $(function () {
+            // 一进入页面就显示文章列表
+            // 发送ajax请求
+            $.ajax({
+                type: 'get',
+                url: BigNew.category_list,
+                //dataType: 'json',
+                success: function (backData) {
+                    console.log(backData);
+                    var resHtml = template('art_cat', backData);
+                    $('tbody').html(resHtml);
+                }
+            });
+            // 是 新增按钮 / 编辑按钮 弹出模态框
+            // show.bs.modal 这个事件是在模态框显示的时候立即触发
+            //如果是通过点击某个作为触发器的元素,则此元素通过事件的 relatedTarget 属性进行访问
+            //给出模态框注册事件
+            $('#myModal').on('show.bs.modal', function (e) {
+                console.log(e.relatedTarget);//可以获取是谁弹出的模态框
+                // 新增按钮
+                if (e.relatedTarget === $('#xinzengfenlei')[0]) {
+                    $('#myModalLabel').text('新增分类');
+                    $('#btnAddOrEdit').text('新增').addClass('btn-success').removeClass('btn-info');
+                } else {
+                    $('#myModalLabel').text('编辑分类');
+                    $('#btnAddOrEdit').text('编辑').addClass('btn-info').removeClass('btn-success');
+                    // 编辑第一步
+                    // 把需要的编辑的当前一行文章内容显示在编辑框内
+                    $('#recipient-name').val($(e.relatedTarget).parent().prev().prev().text());
+                    $('#message-text').val($(e.relatedTarget).parent().prev().text());
+                    $('#categoryId').val($(e.relatedTarget).attr('data-id'));
+                };
+            });
+            //点击模态框的 确认按钮 模态框隐藏 内容清空
+            $('#btnAddOrEdit').on('click', function () {
+                //判断是新增/编辑
+                if ($(this).hasClass('btn-success')) {
+                    // 获取用户输入的内容
+                    var categoryName = $('#recipient-name').val().trim();
+                    var categorySlug = $('#message-text').val().trim();
+                    // 判断非空
+                    if (categoryName == "" || categorySlug == "") {
+                        alert('输入不能为空');
+                        return;
+                    };
+                    // 发送ajax请求
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.category_add,
+                        data: {
+                            name: categoryName,
+                            slug: categorySlug
+                        },
+                        success: function (backData) {
+                            console.log(backData);
+                            if (backData.code == 201) {
+                                alert('新增成功');
+                                //刷新页面
+                                window.location.reload();
+                                //隐藏模态框
+                                $('#myModal').modal('hide');
+                                // 清空输入框的内容
+                                $('#recipient-name').val("");
+                                $('#message-text').val("");
+                            }
+                        }
+                    })
+                } else {
+                    // 编辑
+                    // 获取 要编辑的文章的名称和别名
+                    var categoryname = $('#recipient-name').val().trim();
+                    var categoryslug = $('#message-text').val().trim();
+                    var categroyid = $('#categoryId').val().trim();
+                    //发送ajax请求
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.category_edit,
+                        data: {
+                            id: categroyid,
+                            name: categoryname,
+                            slug: categroyid
+                        },
+                        success: function (backData) {
+                            console.log(backData);
+                            if (backData.code == 200) {
+                                alert('修改成功');
+                                //刷新页面
+                                window.location.reload();
+                                //影藏模态框
+                                $('#myModal').modal('hide');
+                            }
+                        }
+                    })
+                };
+
+            });
+            // 删除  委托事件
+            $('tbody').on('click', '.delete', function (e) {
+                e.preventDefault();//阻止默认跳转
+                if (confirm('确定删除吗?')) {
+                    // 发送ajax请求
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.category_delete,
+                        data: {
+                            id: $(this).attr('data-id')
+                        },
+                        dataType: 'json',
+                        success: function (backData) {
+                            console.log(backData);
+                            if (backData.code == 204) {
+                                //alert('删除成功');
+                                //刷新页面
+                                window.location.reload();
+
+                            }
+                        }
+                    })
+                }
+
+            });
+        })
+    </script>
+</body>
+
 </html>
