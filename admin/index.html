@@ -77,7 +77,7 @@
         <!-- 顶部栏 -->
         <div class="header_bar">
             <div class="user_center_link">
-                <a href="./user.html" target="main_frame">个人中心</a>
+                <a href="./user.html" onclick="$('#user').trigger('click')" target="main_frame">个人中心</a>
                 <img src="images/2.jpg" alt="person">
                 <a href="javascript:void(0)" class="logout"><i class="iconfont icon-tuichu"></i> 退出</a>
             </div>
@@ -101,9 +101,9 @@
                 success: function (backData) {
                     console.log(backData);
                     if (backData.code == 200) {
-                        $('.user_info>span').val(backData.nickname);
-                        $('.user_info>img').attr('src', backData.userPic);
-                        $('.user_center_link>img').attr('src', backData.userPic);
+                        $('.user_info>span').val(backData.data.nickname);
+                        $('.user_info>img').attr('src', backData.data.userPic);
+                        $('.user_center_link>img').attr('src', backData.data.userPic);
                     }
                 }
             });
