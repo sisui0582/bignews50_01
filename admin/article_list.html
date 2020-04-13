@@ -82,8 +82,8 @@
     <!-- 下拉列表模板 -->
     <script id="category_list" type="text/html">
         <option value="">所有分类</option>
-    {{each data}}
-    <option value="">{{$value.name}}</option>
+    {{each data v}}
+    <option value="{{v.id}}">{{v.name}}</option>
     {{/each}}
     </script>
 
